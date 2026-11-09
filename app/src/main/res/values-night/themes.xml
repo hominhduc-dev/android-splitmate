@@ -1,0 +1,9 @@
+<resources>
+ <style name="Base.Theme.QuanLyChiTieu" parent="Theme.Material3.Light.NoActionBar">
+ <item name="colorPrimary">#236C53</item><item name="colorOnPrimary">#FFFFFF</item>
+ <item name="colorSecondary">#236C53</item><item name="colorSecondaryContainer">#DDEDE3</item><item name="colorOnSecondaryContainer">#1E513E</item>
+ <item name="android:fontFamily">sans</item><item name="android:windowLightStatusBar">true</item>
+ <item name="android:statusBarColor">#F7F8FA</item><item name="android:navigationBarColor">#FFFFFF</item>
+ <item name="android:windowBackground">#F7F8FA</item>
+ </style><style name="Theme.QuanLyChiTieu" parent="Base.Theme.QuanLyChiTieu"/>
+</resources>
