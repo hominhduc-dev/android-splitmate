@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Hộp thoại Lọc lịch sử chi tiêu. Dùng trong WorkspaceFragment.filterEditor() -->
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <LinearLayout style="@style/FormContainer">
+
+        <com.google.android.material.textfield.TextInputLayout
+            style="@style/FormInput"
+            android:hint="@string/hint_search_expense">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/query"
+                style="@style/FormEditText"
+                android:inputType="text|textCapSentences" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <TextView
+            style="@style/FormNote"
+            android:text="@string/label_category" />
+
+        <Spinner
+            android:id="@+id/category"
+            style="@style/FormSpinner" />
+
+        <TextView
+            style="@style/FormNote"
+            android:text="@string/label_payer_filter" />
+
+        <Spinner
+            android:id="@+id/payer"
+            style="@style/FormSpinner" />
+
+        <TextView
+            style="@style/FormNote"
+            android:text="@string/label_month" />
+
+        <Spinner
+            android:id="@+id/month"
+            style="@style/FormSpinner" />
+    </LinearLayout>
+</ScrollView>

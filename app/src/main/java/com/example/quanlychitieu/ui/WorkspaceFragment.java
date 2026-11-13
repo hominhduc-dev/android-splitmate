@@ -18,6 +18,12 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.textfield.*;
 import com.example.quanlychitieu.R;
+import com.example.quanlychitieu.databinding.DialogExpenseBinding;
+import com.example.quanlychitieu.databinding.DialogFilterBinding;
+import com.example.quanlychitieu.databinding.DialogGroceryBinding;
+import com.example.quanlychitieu.databinding.DialogGroupBinding;
+import com.example.quanlychitieu.databinding.DialogMemberBinding;
+import com.example.quanlychitieu.databinding.DialogSettlementBinding;
 import com.example.quanlychitieu.databinding.FragmentWorkspaceBinding;
 import com.example.quanlychitieu.utils.SplitCalculator;
 import java.util.*;
@@ -107,29 +113,106 @@ public class WorkspaceFragment extends Fragment implements WorkspaceAdapter.Acti
  }
  @Override public void check(WorkspaceAdapter.Row r,boolean on){model.write(db->db.markBought(id(r.data),on),null);}
  private void confirm(String title,WorkspaceModel.Write write){new MaterialAlertDialogBuilder(requireContext()).setTitle(title).setMessage("Thao tác này không thể hoàn tác.").setNegativeButton("Hủy",null).setPositiveButton("Xóa",(d,w)->model.write(write,null)).show();}
- private int dp(int n){return Math.round(n*getResources().getDisplayMetrics().density);}
- private LinearLayout form(){LinearLayout f=new LinearLayout(requireContext());f.setOrientation(LinearLayout.VERTICAL);f.setPadding(dp(24),dp(8),dp(24),dp(16));return f;}
- private TextView note(LinearLayout f,String text){TextView t=new TextView(requireContext());t.setText(text);t.setTextColor(0xFF69766F);t.setTextSize(14);t.setPadding(0,dp(12),0,dp(8));f.addView(t);return t;}
- private EditText input(LinearLayout f,String label,String value,boolean numeric){TextInputLayout wrap=new TextInputLayout(requireContext());wrap.setHint(label);wrap.setBoxBackgroundMode(TextInputLayout.BOX_BACKGROUND_OUTLINE);wrap.setBoxCornerRadii(dp(12),dp(12),dp(12),dp(12));TextInputEditText e=new TextInputEditText(requireContext());e.setSingleLine(true);e.setFilters(new android.text.InputFilter[]{new android.text.InputFilter.LengthFilter(180)});e.setInputType(numeric?2:android.text.InputType.TYPE_CLASS_TEXT|android.text.InputType.TYPE_TEXT_FLAG_CAP_SENTENCES);e.setText(value);wrap.addView(e);LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(-1,-2);lp.topMargin=dp(12);f.addView(wrap,lp);return e;}
- private Spinner select(LinearLayout f,String label,String[] names){note(f,label);Spinner p=new Spinner(requireContext());p.setMinimumHeight(dp(48));p.setAdapter(new ArrayAdapter<>(requireContext(),android.R.layout.simple_spinner_dropdown_item,names));f.addView(p);return p;}
+ // ===== Hộp thoại nhập liệu =====
+ // Giao diện của từng hộp thoại nằm trong res/layout/dialog_*.xml.
+ // Java chỉ đổ dữ liệu vào các ô (qua ViewBinding), kiểm tra dữ liệu nhập và lưu.
+
+ /** Đổ danh sách chữ vào một Spinner (danh sách thành viên, danh mục… chỉ biết lúc chạy). */
+ private void fill(Spinner spinner,String[] items){
+  spinner.setAdapter(new ArrayAdapter<>(requireContext(),android.R.layout.simple_spinner_dropdown_item,items));
+ }
  private String required(EditText e){String value=e.getText().toString().trim();if(value.isEmpty()){e.setError("Vui lòng nhập thông tin");e.requestFocus();throw new IllegalArgumentException("Vui lòng điền đầy đủ thông tin");}return value;}
  private long number(EditText e,boolean zero){try{long n=Long.parseLong(required(e));if(n<0||(!zero&&n==0)||n>1000000000000L)throw new Exception();return n;}catch(Exception x){e.setError("Nhập số nguyên "+(zero?"từ 0":"lớn hơn 0"));throw new IllegalArgumentException("Số tiền hoặc số lượng chưa hợp lệ");}}
  private interface Prepare {WorkspaceModel.Write prepare();}
- private void edit(String title,LinearLayout f,boolean fullscreen,Prepare prepare){ScrollView sc=new ScrollView(requireContext());sc.setFillViewport(true);sc.addView(f);editor=new MaterialAlertDialogBuilder(requireContext()).setTitle(title).setView(sc).setNegativeButton("Hủy",null).setPositiveButton("Lưu",null).create();final androidx.appcompat.app.AlertDialog current=editor;
+ /** Mở hộp thoại có nút Hủy/Lưu với nội dung là layout đã inflate. Bấm Lưu: kiểm tra dữ liệu (prepare) rồi ghi xuống database. */
+ private void edit(String title,View content,boolean fullscreen,Prepare prepare){editor=new MaterialAlertDialogBuilder(requireContext()).setTitle(title).setView(content).setNegativeButton("Hủy",null).setPositiveButton("Lưu",null).create();final androidx.appcompat.app.AlertDialog current=editor;
  current.setOnShowListener(d->{if(fullscreen&&current.getWindow()!=null)current.getWindow().setLayout(-1,-1);current.getButton(-1).setOnClickListener(v->{try{WorkspaceModel.Write write=prepare.prepare();current.getButton(-1).setEnabled(false);model.write(write,()->{current.dismiss();});}catch(IllegalArgumentException e){toast(e.getMessage());}});});current.show();}
- private void groupEditor(ContentValues old){LinearLayout f=form();EditText name=input(f,"Tên nhóm",str(old,"name"),false);note(f,"Ví dụ: Phòng trọ A, Đà Lạt cuối tuần…");edit(old==null?"Tạo nhóm":"Đổi tên nhóm",f,false,()->{ContentValues v=new ContentValues();v.put("name",required(name));if(old==null)v.put("created_at",System.currentTimeMillis());return db->{long key=db.save("groups",old==null?0:id(old),v);if(old==null)new android.os.Handler(android.os.Looper.getMainLooper()).post(()->{model.select(key);if(isAdded())((com.example.quanlychitieu.MainActivity)requireActivity()).openGroup();});};});}
- private void memberEditor(ContentValues old){final long group=s.groupId;LinearLayout f=form();EditText name=input(f,"Tên thành viên",str(old,"name"),false);edit(old==null?"Thêm thành viên":"Đổi tên thành viên",f,false,()->{ContentValues v=new ContentValues();v.put("name",required(name));v.put("group_id",group);return db->db.save("members",old==null?0:id(old),v);});}
+ /** Tạo nhóm (old == null) hoặc đổi tên nhóm. Layout: dialog_group.xml */
+ private void groupEditor(ContentValues old){
+  DialogGroupBinding form=DialogGroupBinding.inflate(getLayoutInflater());
+  EditText name=form.name;
+  name.setText(str(old,"name"));
+  edit(old==null?"Tạo nhóm":"Đổi tên nhóm",form.getRoot(),false,()->{ContentValues v=new ContentValues();v.put("name",required(name));if(old==null)v.put("created_at",System.currentTimeMillis());return db->{long key=db.save("groups",old==null?0:id(old),v);if(old==null)new android.os.Handler(android.os.Looper.getMainLooper()).post(()->{model.select(key);if(isAdded())((com.example.quanlychitieu.MainActivity)requireActivity()).openGroup();});};});
+ }
+
+ /** Thêm hoặc đổi tên thành viên. Layout: dialog_member.xml */
+ private void memberEditor(ContentValues old){
+  final long group=s.groupId;
+  DialogMemberBinding form=DialogMemberBinding.inflate(getLayoutInflater());
+  EditText name=form.name;
+  name.setText(str(old,"name"));
+  edit(old==null?"Thêm thành viên":"Đổi tên thành viên",form.getRoot(),false,()->{ContentValues v=new ContentValues();v.put("name",required(name));v.put("group_id",group);return db->db.save("members",old==null?0:id(old),v);});
+ }
  private String[] names(List<ContentValues> members){String[] out=new String[members.size()];for(int i=0;i<out.length;i++)out[i]=str(members.get(i),"name");return out;}
  private void expenseEditor(ContentValues old){expenseEditor(old,Collections.emptyList());}
- private void expenseEditor(ContentValues old,List<Long> groceryIds){if(s.members.isEmpty()){toast("Thêm thành viên trong Nhóm trước khi tạo khoản chi");return;}final WorkspaceModel.Snapshot data=s;final List<ContentValues> members=data.members;final long group=data.groupId;LinearLayout f=form();note(f,groupName()+" · Chia đều cho những người bạn chọn");long estimate=0;List<String> groceryNames=new ArrayList<>();for(ContentValues g:data.groceries)if(groceryIds.contains(id(g))){estimate+=num(g,"quantity")*num(g,"estimated_price");groceryNames.add(str(g,"name"));}final String groceryTitle=groceryNames.size()==1?groceryNames.get(0):"Đi chợ · "+groceryNames.size()+" món";
- if(!groceryIds.isEmpty())note(f,"Món đã mua: "+android.text.TextUtils.join(", ",groceryNames)+". Nhập tổng tiền thực trả; giá dự kiến chỉ để tham khảo.");EditText title=input(f,"Tên khoản chi",old==null&&!groceryIds.isEmpty()?groceryTitle:str(old,"title"),false),amount=input(f,"Số tiền (VNĐ)",old==null&&!groceryIds.isEmpty()?""+estimate:str(old,"amount"),true);Spinner payer=select(f,"Ai đã thanh toán?",names(members));String[] cats={"Ăn uống","Nhà ở","Di chuyển","Mua sắm","Khác"};Spinner cat=select(f,"Danh mục",cats);if(!groceryIds.isEmpty())cat.setSelection(3);if(old!=null){for(int i=0;i<members.size();i++)if(id(members.get(i))==num(old,"payer_id"))payer.setSelection(i);for(int i=0;i<cats.length;i++)if(cats[i].equals(str(old,"category")))cat.setSelection(i);}
- note(f,"Chia cho ai?");Set<Long> selected=new HashSet<>();if(old!=null)for(ContentValues share:data.shares)if(num(share,"expense_id")==id(old))selected.add(num(share,"member_id"));List<CheckBox> checks=new ArrayList<>();for(ContentValues m:members){CheckBox c=new CheckBox(requireContext());c.setText(str(m,"name"));c.setMinimumHeight(dp(48));c.setChecked(old==null||selected.contains(id(m)));f.addView(c);checks.add(c);}TextView preview=note(f,"");
+ /** Thêm/sửa khoản chi, hoặc ghi chi cho các món đi chợ đã mua (groceryIds). Layout: dialog_expense.xml */
+ private void expenseEditor(ContentValues old,List<Long> groceryIds){
+  if(s.members.isEmpty()){toast("Thêm thành viên trong Nhóm trước khi tạo khoản chi");return;}
+  final WorkspaceModel.Snapshot data=s;final List<ContentValues> members=data.members;final long group=data.groupId;
+  DialogExpenseBinding form=DialogExpenseBinding.inflate(getLayoutInflater());
+  form.groupInfo.setText(groupName()+" · Chia đều cho những người bạn chọn");
+
+  // Nếu ghi chi từ đi chợ: gợi ý tên và số tiền từ giá dự kiến của các món đã chọn
+  long estimate=0;List<String> groceryNames=new ArrayList<>();
+  for(ContentValues g:data.groceries)if(groceryIds.contains(id(g))){estimate+=num(g,"quantity")*num(g,"estimated_price");groceryNames.add(str(g,"name"));}
+  final String groceryTitle=groceryNames.size()==1?groceryNames.get(0):"Đi chợ · "+groceryNames.size()+" món";
+  if(!groceryIds.isEmpty()){
+   form.groceryInfo.setText("Món đã mua: "+android.text.TextUtils.join(", ",groceryNames)+". Nhập tổng tiền thực trả; giá dự kiến chỉ để tham khảo.");
+   form.groceryInfo.setVisibility(View.VISIBLE);
+  }
+
+  EditText title=form.title,amount=form.amount;
+  title.setText(old==null&&!groceryIds.isEmpty()?groceryTitle:str(old,"title"));
+  amount.setText(old==null&&!groceryIds.isEmpty()?""+estimate:str(old,"amount"));
+
+  Spinner payer=form.payer,cat=form.category;
+  fill(payer,names(members));
+  String[] cats=getResources().getStringArray(R.array.expense_categories);
+  fill(cat,cats);
+  if(!groceryIds.isEmpty())cat.setSelection(3); // "Mua sắm"
+  if(old!=null){for(int i=0;i<members.size();i++)if(id(members.get(i))==num(old,"payer_id"))payer.setSelection(i);for(int i=0;i<cats.length;i++)if(cats[i].equals(str(old,"category")))cat.setSelection(i);}
+
+  // Mỗi thành viên một CheckBox (item_share_member.xml). Sửa khoản chi thì tích sẵn những người đã chia.
+  Set<Long> selected=new HashSet<>();if(old!=null)for(ContentValues share:data.shares)if(num(share,"expense_id")==id(old))selected.add(num(share,"member_id"));
+  List<CheckBox> checks=new ArrayList<>();
+  for(ContentValues m:members){
+   CheckBox c=(CheckBox)getLayoutInflater().inflate(R.layout.item_share_member,form.members,false);
+   c.setText(str(m,"name"));c.setChecked(old==null||selected.contains(id(m)));
+   form.members.addView(c);checks.add(c);
+  }
+  TextView preview=form.preview;
  Runnable update=()->{try{long n=Long.parseLong(amount.getText().toString());List<Long> ids=new ArrayList<>();for(int i=0;i<checks.size();i++)if(checks.get(i).isChecked())ids.add(id(members.get(i)));Map<Long,Long> shares=SplitCalculator.splitEqually(n,ids);StringBuilder text=new StringBuilder("Mỗi người chịu\n");for(ContentValues m:members)if(shares.containsKey(id(m)))text.append(str(m,"name")).append(": ").append(money(shares.get(id(m)))).append("\n");preview.setText(text.toString().trim());}catch(Exception e){preview.setText("Nhập số tiền và chọn người tham gia để xem phần chia.");}};
  amount.addTextChangedListener(new TextWatcher(){public void beforeTextChanged(CharSequence t,int a,int c,int d){}public void onTextChanged(CharSequence t,int a,int c,int d){update.run();}public void afterTextChanged(Editable e){}});for(CheckBox c:checks)c.setOnCheckedChangeListener((v,on)->update.run());update.run();
- edit(old==null?"Thêm khoản chi":"Sửa khoản chi",f,true,()->{String t=required(title);long n=number(amount,false),p=id(members.get(payer.getSelectedItemPosition()));String category=cats[cat.getSelectedItemPosition()];List<Long> ids=new ArrayList<>();for(int i=0;i<checks.size();i++)if(checks.get(i).isChecked())ids.add(id(members.get(i)));if(ids.isEmpty())throw new IllegalArgumentException("Chọn ít nhất một người tham gia chia tiền");return db->{if(groceryIds.isEmpty())db.expense(old==null?0:id(old),group,t,n,p,category,ids);else db.convertGroceries(group,groceryIds,t,n,p,category,ids);};});}
- private void groceryEditor(ContentValues old){final long group=s.groupId;LinearLayout f=form();EditText name=input(f,"Tên món hàng",str(old,"name"),false),qty=input(f,"Số lượng",old==null?"1":str(old,"quantity"),true),price=input(f,"Đơn giá dự kiến (VNĐ)",old==null?"0":str(old,"estimated_price"),true);EditText unit=input(f,"Đơn vị (kg, g, quả, chai…)",old==null?"phần":str(old,"unit"),false);note(f,"Ví dụ: 500 g gạo, 10 quả trứng. Tổng dự kiến = số lượng × đơn giá. Mua xong tích chọn, rồi Ghi chi để chia tiền thực trả.");edit(old==null?"Thêm món hàng":"Sửa món hàng",f,false,()->{long q=number(qty,false),p=number(price,true);if(q>1000000||p>1000000000000L/q)throw new IllegalArgumentException("Số lượng tối đa 1 triệu, tổng tối đa 1.000 tỷ");ContentValues v=new ContentValues();v.put("name",required(name));v.put("unit",required(unit));v.put("quantity",q);v.put("estimated_price",p);v.put("group_id",group);return db->db.save("grocery_items",old==null?0:id(old),v);});}
+ edit(old==null?"Thêm khoản chi":"Sửa khoản chi",form.getRoot(),true,()->{String t=required(title);long n=number(amount,false),p=id(members.get(payer.getSelectedItemPosition()));String category=cats[cat.getSelectedItemPosition()];List<Long> ids=new ArrayList<>();for(int i=0;i<checks.size();i++)if(checks.get(i).isChecked())ids.add(id(members.get(i)));if(ids.isEmpty())throw new IllegalArgumentException("Chọn ít nhất một người tham gia chia tiền");return db->{if(groceryIds.isEmpty())db.expense(old==null?0:id(old),group,t,n,p,category,ids);else db.convertGroceries(group,groceryIds,t,n,p,category,ids);};});
+ }
+
+ /** Thêm hoặc sửa món đi chợ. Layout: dialog_grocery.xml */
+ private void groceryEditor(ContentValues old){
+  final long group=s.groupId;
+  DialogGroceryBinding form=DialogGroceryBinding.inflate(getLayoutInflater());
+  EditText name=form.name,qty=form.quantity,price=form.price,unit=form.unit;
+  name.setText(str(old,"name"));
+  qty.setText(old==null?"1":str(old,"quantity"));
+  price.setText(old==null?"0":str(old,"estimated_price"));
+  unit.setText(old==null?"phần":str(old,"unit"));
+  edit(old==null?"Thêm món hàng":"Sửa món hàng",form.getRoot(),false,()->{long q=number(qty,false),p=number(price,true);if(q>1000000||p>1000000000000L/q)throw new IllegalArgumentException("Số lượng tối đa 1 triệu, tổng tối đa 1.000 tỷ");ContentValues v=new ContentValues();v.put("name",required(name));v.put("unit",required(unit));v.put("quantity",q);v.put("estimated_price",p);v.put("group_id",group);return db->db.save("grocery_items",old==null?0:id(old),v);});
+ }
+
  private void settlementEditor(){settlementEditor(null);}
- private void settlementEditor(ContentValues suggestion){final List<ContentValues> members=s.members;if(members.size()<2){toast("Cần ít nhất 2 thành viên");return;}final long group=s.groupId;LinearLayout f=form();Spinner from=select(f,"Người chuyển",names(members)),to=select(f,"Người nhận",names(members));for(int i=0;i<members.size();i++){if(num(members.get(i),"balance")<0)from.setSelection(i);if(num(members.get(i),"balance")>0)to.setSelection(i);}if(suggestion!=null)for(int i=0;i<members.size();i++){if(id(members.get(i))==num(suggestion,"from"))from.setSelection(i);if(id(members.get(i))==num(suggestion,"to"))to.setSelection(i);}EditText amount=input(f,"Số tiền đã chuyển (VNĐ)",suggestion==null?"":str(suggestion,"amount"),true);note(f,"Chỉ ghi nhận khi thành viên đã chuyển tiền cho nhau.");edit("Ghi nhận trả nợ",f,false,()->{long a=id(members.get(from.getSelectedItemPosition())),b=id(members.get(to.getSelectedItemPosition())),n=number(amount,false);if(a==b)throw new IllegalArgumentException("Chọn hai thành viên khác nhau");return db->db.settle(group,a,b,n);});}
+
+ /** Ghi nhận một khoản trả nợ; suggestion là gợi ý "ai trả ai" nếu người dùng chạm vào gợi ý. Layout: dialog_settlement.xml */
+ private void settlementEditor(ContentValues suggestion){
+  final List<ContentValues> members=s.members;if(members.size()<2){toast("Cần ít nhất 2 thành viên");return;}final long group=s.groupId;
+  DialogSettlementBinding form=DialogSettlementBinding.inflate(getLayoutInflater());
+  Spinner from=form.from,to=form.to;
+  fill(from,names(members));fill(to,names(members));
+  // Chọn sẵn người đang nợ làm người chuyển, người được nhận làm người nhận
+  for(int i=0;i<members.size();i++){if(num(members.get(i),"balance")<0)from.setSelection(i);if(num(members.get(i),"balance")>0)to.setSelection(i);}
+  if(suggestion!=null)for(int i=0;i<members.size();i++){if(id(members.get(i))==num(suggestion,"from"))from.setSelection(i);if(id(members.get(i))==num(suggestion,"to"))to.setSelection(i);}
+  EditText amount=form.amount;
+  amount.setText(suggestion==null?"":str(suggestion,"amount"));
+  edit("Ghi nhận trả nợ",form.getRoot(),false,()->{long a=id(members.get(from.getSelectedItemPosition())),b=id(members.get(to.getSelectedItemPosition())),n=number(amount,false);if(a==b)throw new IllegalArgumentException("Chọn hai thành viên khác nhau");return db->db.settle(group,a,b,n);});
+ }
  private void chooseGroceries(){
   List<ContentValues> available=new ArrayList<>();for(ContentValues g:s.groceries)if(num(g,"is_bought")==1&&g.getAsLong("expense_id")==null)available.add(g);
   if(available.isEmpty()){toast("Chưa có món đã mua chờ ghi chi");return;}String[] labels=new String[available.size()];boolean[] selected=new boolean[available.size()];Arrays.fill(selected,true);
@@ -142,11 +225,18 @@ public class WorkspaceFragment extends Fragment implements WorkspaceAdapter.Acti
   if(!categoryFilter.isEmpty()&&!categoryFilter.equals(str(e,"category")))return false;if(payerFilter!=0&&num(e,"payer_id")!=payerFilter)return false;
   return monthFilter.isEmpty()||monthFilter.equals(new SimpleDateFormat("MM/yyyy",Locale.US).format(new Date(num(e,"created_at"))));
  }
+ /** Bộ lọc lịch sử chi tiêu theo tên, danh mục, người trả và tháng. Layout: dialog_filter.xml */
  private void filterEditor(){
-  LinearLayout f=form();EditText query=input(f,"Tìm theo tên khoản chi",search,false);String[] categories={"Tất cả danh mục","Ăn uống","Nhà ở","Di chuyển","Mua sắm","Khác"};Spinner category=select(f,"Danh mục",categories);for(int i=1;i<categories.length;i++)if(categories[i].equals(categoryFilter))category.setSelection(i);
-  List<ContentValues> members=s.members;String[] payers=new String[members.size()+1];payers[0]="Tất cả người trả";for(int i=0;i<members.size();i++)payers[i+1]=str(members.get(i),"name");Spinner payer=select(f,"Người thanh toán",payers);for(int i=0;i<members.size();i++)if(id(members.get(i))==payerFilter)payer.setSelection(i+1);
-  List<String> months=new ArrayList<>();months.add("Tất cả thời gian");for(ContentValues e:s.expenses){String month=new SimpleDateFormat("MM/yyyy",Locale.US).format(new Date(num(e,"created_at")));if(!months.contains(month))months.add(month);}Spinner month=select(f,"Tháng",months.toArray(new String[0]));if(months.contains(monthFilter))month.setSelection(months.indexOf(monthFilter));ScrollView sc=new ScrollView(requireContext());sc.addView(f);
-  new MaterialAlertDialogBuilder(requireContext()).setTitle("Lọc lịch sử chi tiêu").setView(sc).setNegativeButton("Hủy",null).setNeutralButton("Xóa bộ lọc",(d,w)->{search="";categoryFilter="";monthFilter="";payerFilter=0;render();}).setPositiveButton("Áp dụng",(d,w)->{search=query.getText().toString().trim();categoryFilter=category.getSelectedItemPosition()==0?"":categories[category.getSelectedItemPosition()];payerFilter=payer.getSelectedItemPosition()==0?0:id(members.get(payer.getSelectedItemPosition()-1));monthFilter=month.getSelectedItemPosition()==0?"":months.get(month.getSelectedItemPosition());render();b.list.scrollToPosition(0);}).show();
+  DialogFilterBinding form=DialogFilterBinding.inflate(getLayoutInflater());
+  EditText query=form.query;query.setText(search);
+  // Danh mục: thêm lựa chọn "Tất cả danh mục" lên đầu danh sách trong arrays.xml
+  String[] cats=getResources().getStringArray(R.array.expense_categories);String[] categories=new String[cats.length+1];categories[0]="Tất cả danh mục";System.arraycopy(cats,0,categories,1,cats.length);
+  Spinner category=form.category;fill(category,categories);for(int i=1;i<categories.length;i++)if(categories[i].equals(categoryFilter))category.setSelection(i);
+  List<ContentValues> members=s.members;String[] payers=new String[members.size()+1];payers[0]="Tất cả người trả";for(int i=0;i<members.size();i++)payers[i+1]=str(members.get(i),"name");
+  Spinner payer=form.payer;fill(payer,payers);for(int i=0;i<members.size();i++)if(id(members.get(i))==payerFilter)payer.setSelection(i+1);
+  List<String> months=new ArrayList<>();months.add("Tất cả thời gian");for(ContentValues e:s.expenses){String month=new SimpleDateFormat("MM/yyyy",Locale.US).format(new Date(num(e,"created_at")));if(!months.contains(month))months.add(month);}
+  Spinner month=form.month;fill(month,months.toArray(new String[0]));if(months.contains(monthFilter))month.setSelection(months.indexOf(monthFilter));
+  new MaterialAlertDialogBuilder(requireContext()).setTitle("Lọc lịch sử chi tiêu").setView(form.getRoot()).setNegativeButton("Hủy",null).setNeutralButton("Xóa bộ lọc",(d,w)->{search="";categoryFilter="";monthFilter="";payerFilter=0;render();}).setPositiveButton("Áp dụng",(d,w)->{search=query.getText().toString().trim();categoryFilter=category.getSelectedItemPosition()==0?"":categories[category.getSelectedItemPosition()];payerFilter=payer.getSelectedItemPosition()==0?0:id(members.get(payer.getSelectedItemPosition()-1));monthFilter=month.getSelectedItemPosition()==0?"":months.get(month.getSelectedItemPosition());render();b.list.scrollToPosition(0);}).show();
  }
 
 }

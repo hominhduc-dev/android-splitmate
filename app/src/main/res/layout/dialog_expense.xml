@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Hộp thoại Thêm / Sửa khoản chi. Dùng trong WorkspaceFragment.expenseEditor()
+     Danh sách người chia (members) thay đổi theo nhóm nên các CheckBox được thêm bằng code
+     từ layout item_share_member.xml. -->
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:fillViewport="true">
+
+    <LinearLayout style="@style/FormContainer">
+
+        <!-- "Tên nhóm · Chia đều cho những người bạn chọn", điền trong code -->
+        <TextView
+            android:id="@+id/group_info"
+            style="@style/FormNote" />
+
+        <!-- Chỉ hiện khi ghi chi từ các món đi chợ đã mua -->
+        <TextView
+            android:id="@+id/grocery_info"
+            style="@style/FormNote"
+            android:visibility="gone" />
+
+        <com.google.android.material.textfield.TextInputLayout
+            style="@style/FormInput"
+            android:hint="@string/hint_expense_title">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/title"
+                style="@style/FormEditText"
+                android:inputType="text|textCapSentences" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            style="@style/FormInput"
+            android:hint="@string/hint_amount">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/amount"
+                style="@style/FormEditText"
+                android:inputType="number" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <TextView
+            style="@style/FormNote"
+            android:text="@string/label_payer" />
+
+        <Spinner
+            android:id="@+id/payer"
+            style="@style/FormSpinner" />
+
+        <TextView
+            style="@style/FormNote"
+            android:text="@string/label_category" />
+
+        <Spinner
+            android:id="@+id/category"
+            style="@style/FormSpinner" />
+
+        <TextView
+            style="@style/FormNote"
+            android:text="@string/label_split_with" />
+
+        <!-- Mỗi thành viên một CheckBox, thêm trong code -->
+        <LinearLayout
+            android:id="@+id/members"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical" />
+
+        <!-- Xem trước "Mỗi người chịu…", cập nhật khi đổi số tiền hoặc người chia -->
+        <TextView
+            android:id="@+id/preview"
+            style="@style/FormNote" />
+    </LinearLayout>
+</ScrollView>

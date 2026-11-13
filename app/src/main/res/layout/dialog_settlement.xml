@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Hộp thoại Ghi nhận trả nợ. Dùng trong WorkspaceFragment.settlementEditor() -->
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:fillViewport="true">
+
+    <LinearLayout style="@style/FormContainer">
+
+        <TextView
+            style="@style/FormNote"
+            android:text="@string/label_sender" />
+
+        <Spinner
+            android:id="@+id/from"
+            style="@style/FormSpinner" />
+
+        <TextView
+            style="@style/FormNote"
+            android:text="@string/label_receiver" />
+
+        <Spinner
+            android:id="@+id/to"
+            style="@style/FormSpinner" />
+
+        <com.google.android.material.textfield.TextInputLayout
+            style="@style/FormInput"
+            android:hint="@string/hint_transferred">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/amount"
+                style="@style/FormEditText"
+                android:inputType="number" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <TextView
+            style="@style/FormNote"
+            android:text="@string/settlement_help" />
+    </LinearLayout>
+</ScrollView>

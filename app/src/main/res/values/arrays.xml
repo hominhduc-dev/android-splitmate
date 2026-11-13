@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Danh mục khoản chi. Giữ nguyên thứ tự: "Mua sắm" (vị trí 3) được chọn sẵn khi ghi chi đi chợ. -->
+    <string-array name="expense_categories">
+        <item>Ăn uống</item>
+        <item>Nhà ở</item>
+        <item>Di chuyển</item>
+        <item>Mua sắm</item>
+        <item>Khác</item>
+    </string-array>
+</resources>

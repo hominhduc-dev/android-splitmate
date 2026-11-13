@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Hộp thoại Tạo nhóm / Đổi tên nhóm. Dùng trong WorkspaceFragment.groupEditor() -->
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:fillViewport="true">
+
+    <LinearLayout style="@style/FormContainer">
+
+        <com.google.android.material.textfield.TextInputLayout
+            style="@style/FormInput"
+            android:hint="@string/hint_group_name">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/name"
+                style="@style/FormEditText"
+                android:inputType="text|textCapSentences" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <TextView
+            style="@style/FormNote"
+            android:text="@string/group_example" />
+    </LinearLayout>
+</ScrollView>

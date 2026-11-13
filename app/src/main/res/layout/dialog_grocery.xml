@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Hộp thoại Thêm / Sửa món hàng đi chợ. Dùng trong WorkspaceFragment.groceryEditor() -->
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:fillViewport="true">
+
+    <LinearLayout style="@style/FormContainer">
+
+        <com.google.android.material.textfield.TextInputLayout
+            style="@style/FormInput"
+            android:hint="@string/hint_grocery_name">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/name"
+                style="@style/FormEditText"
+                android:inputType="text|textCapSentences" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            style="@style/FormInput"
+            android:hint="@string/hint_quantity">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/quantity"
+                style="@style/FormEditText"
+                android:inputType="number" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            style="@style/FormInput"
+            android:hint="@string/hint_estimated_price">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/price"
+                style="@style/FormEditText"
+                android:inputType="number" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            style="@style/FormInput"
+            android:hint="@string/hint_unit">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/unit"
+                style="@style/FormEditText"
+                android:inputType="text|textCapSentences" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <TextView
+            style="@style/FormNote"
+            android:text="@string/grocery_help" />
+    </LinearLayout>
+</ScrollView>
