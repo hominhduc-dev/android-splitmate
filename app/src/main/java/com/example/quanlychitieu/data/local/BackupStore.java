@@ -1,4 +1,4 @@
-package com.example.quanlychitieu.database;
+package com.example.quanlychitieu.data.local;
 
 import android.content.*;
 import android.net.Uri;

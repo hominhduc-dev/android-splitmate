@@ -1,4 +1,4 @@
-package com.example.quanlychitieu.utils;
+package com.example.quanlychitieu.domain;
 import java.util.*;
 public final class SplitCalculator {
  public static Map<Long,Long> splitEqually(long amount,List<Long> ids){

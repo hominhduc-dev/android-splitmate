@@ -1,4 +1,4 @@
-package com.example.quanlychitieu.utils;
+package com.example.quanlychitieu.domain;
 
 import java.util.*;
 /** Greedy matching of net balances. Deterministic; does not claim the minimum number of transfers. */

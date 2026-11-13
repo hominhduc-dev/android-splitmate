@@ -3,7 +3,7 @@ import android.content.*;
 import android.database.sqlite.*;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
-import com.example.quanlychitieu.database.DatabaseHelper;
+import com.example.quanlychitieu.data.local.DatabaseHelper;
 import java.util.*;
 import org.junit.Test;
 import org.junit.runner.RunWith;

@@ -2,7 +2,7 @@ package com.example.quanlychitieu;
 import org.junit.Test;
 import static org.junit.Assert.*;
 import java.util.*;
-import com.example.quanlychitieu.utils.DebtPlanner;
+import com.example.quanlychitieu.domain.DebtPlanner;
 public class DebtPlannerTest {
  @Test public void suggestedTransfersCancelEveryBalance(){
   Map<Long,Long> balances=new LinkedHashMap<>();balances.put(1L,200000L);balances.put(2L,-100000L);balances.put(3L,-100000L);

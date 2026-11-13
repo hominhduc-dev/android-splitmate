@@ -1,10 +1,17 @@
-package com.example.quanlychitieu.database;
+package com.example.quanlychitieu.data.local;
 import android.content.*;
 import android.database.*;
 import android.database.sqlite.*;
 import java.util.*;
-import com.example.quanlychitieu.utils.SplitCalculator;
+import com.example.quanlychitieu.domain.SplitCalculator;
+/**
+ * Tầng truy cập SQLite: tạo 6 bảng, nâng cấp phiên bản DB và các thao tác cần transaction.
+ * Giao diện không gọi trực tiếp lớp này mà đi qua các Repository trong data/repository.
+ */
 public class DatabaseHelper extends SQLiteOpenHelper {
+ private static DatabaseHelper instance;
+ /** Cả app dùng chung một kết nối database. */
+ public static synchronized DatabaseHelper getInstance(Context c){if(instance==null)instance=new DatabaseHelper(c.getApplicationContext());return instance;}
  public DatabaseHelper(Context c){this(c,"splitmate.db");}
  public DatabaseHelper(Context c,String name){super(c,name,null,3);}
  public void onConfigure(SQLiteDatabase db){db.setForeignKeyConstraintsEnabled(true);}

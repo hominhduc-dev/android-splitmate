@@ -1,12 +1,13 @@
 package com.example.quanlychitieu;
 
-import android.content.ContentValues;
 import android.widget.EditText;
 import androidx.lifecycle.*;
 import androidx.test.core.app.ActivityScenario;
 import androidx.test.espresso.*;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
-import com.example.quanlychitieu.ui.WorkspaceModel;
+import com.example.quanlychitieu.ui.common.BaseViewModel;
+import com.example.quanlychitieu.ui.grocery.GroceryViewModel;
+import com.example.quanlychitieu.ui.group.GroupViewModel;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import static androidx.test.espresso.Espresso.*;
@@ -31,14 +32,14 @@ public class WorkspaceFlowTest {
   try(java.io.FileOutputStream out=new java.io.FileOutputStream(file)){shot.compress(android.graphics.Bitmap.CompressFormat.PNG,100,out);}catch(Exception e){throw new AssertionError(e);}finally{shot.recycle();}
  }
  @Test public void groupExpenseDebtAndGrocerySurviveRecreation(){
-  DataIdle idle=new DataIdle();final WorkspaceModel[] model={null};Observer<Boolean> observer=idle::set;final long[] created={0};
+  DataIdle idle=new DataIdle();final GroupViewModel[] model={null};final GroceryViewModel[] grocery={null};Observer<Boolean> observer=idle::set;final long[] created={0};
   try(ActivityScenario<MainActivity> scenario=ActivityScenario.launch(MainActivity.class)){
-   scenario.onActivity(a->{model[0]=new ViewModelProvider(a).get(WorkspaceModel.class);model[0].busy.observeForever(observer);});IdlingRegistry.getInstance().register(idle);
+   scenario.onActivity(a->{model[0]=new ViewModelProvider(a).get(GroupViewModel.class);grocery[0]=new ViewModelProvider(a).get(GroceryViewModel.class);BaseViewModel.busy().observeForever(observer);});IdlingRegistry.getInstance().register(idle);
    try{
     onView(withId(R.id.nav_groups)).perform(click());onView(withId(R.id.add)).perform(click());
     onView(isAssignableFrom(EditText.class)).perform(replaceText("Kiểm thử SplitMate"),androidx.test.espresso.action.ViewActions.closeSoftKeyboard());onView(withId(android.R.id.button1)).perform(click());
     onView(withText("Thành viên")).perform(click());
-    scenario.onActivity(a->created[0]=model[0].data.getValue().groupId);
+    scenario.onActivity(a->created[0]=model[0].getState().getValue().groupId);
     for(String member:new String[]{"An","Bình","Cường"}){
      onView(withId(R.id.add)).perform(click());onView(isAssignableFrom(EditText.class)).perform(replaceText(member),androidx.test.espresso.action.ViewActions.closeSoftKeyboard());onView(withId(android.R.id.button1)).perform(click());
     }
@@ -50,27 +51,27 @@ public class WorkspaceFlowTest {
     onView(withId(R.id.filter)).perform(click());onView(withHint("Tìm theo tên khoản chi")).perform(replaceText("Không tồn tại"),androidx.test.espresso.action.ViewActions.closeSoftKeyboard());onView(withId(android.R.id.button1)).perform(click());onView(withText("Không có kết quả phù hợp")).check(matches(isDisplayed()));
     onView(withId(R.id.filter)).perform(click());onView(withId(android.R.id.button3)).perform(click());
     onView(withText("Công nợ")).perform(click());
-    scenario.onActivity(a->{WorkspaceModel.Snapshot s=model[0].data.getValue();assertEquals(300000,s.total);assertEquals(200000,s.debt);assertEquals(200000L,s.members.get(0).getAsLong("balance").longValue());});
+    scenario.onActivity(a->{GroupViewModel.State s=model[0].getState().getValue();assertEquals(300000,s.total);assertEquals(200000,s.debt);assertEquals(200000L,s.members.get(0).balance);});
     capture("splitmate-debt.png");
     onView(withText("Bình → An")).perform(click());
     onView(withHint("Số tiền đã chuyển (VNĐ)")).perform(replaceText("100000"),androidx.test.espresso.action.ViewActions.closeSoftKeyboard());
     onView(withId(android.R.id.button1)).perform(click());
-    scenario.onActivity(a->assertEquals(100000,model[0].data.getValue().debt));
+    scenario.onActivity(a->assertEquals(100000,model[0].getState().getValue().debt));
     onView(withId(R.id.nav_grocery)).perform(click());onView(withId(R.id.add)).perform(click());
     onView(withHint("Tên món hàng")).perform(replaceText("Gạo"),androidx.test.espresso.action.ViewActions.closeSoftKeyboard());
     onView(withHint("Số lượng")).perform(replaceText("2"),androidx.test.espresso.action.ViewActions.closeSoftKeyboard());onView(withHint("Đơn giá dự kiến (VNĐ)")).perform(replaceText("25000"),androidx.test.espresso.action.ViewActions.closeSoftKeyboard());
     onView(withId(android.R.id.button1)).perform(click());onView(withContentDescription("Đã mua Gạo")).perform(click());onView(withText("Đã mua")).perform(click());
     onView(withContentDescription("Đã mua Gạo")).check(matches(isChecked()));capture("splitmate-grocery.png");scenario.recreate();
     onView(withContentDescription("Đã mua Gạo")).check(matches(isChecked()));
-    scenario.onActivity(a->{assertEquals(0,model[0].data.getValue().pending);assertEquals(300000,model[0].data.getValue().total);});
+    scenario.onActivity(a->{assertEquals(0,grocery[0].getState().getValue().pending);assertEquals(300000,model[0].getState().getValue().total);});
     onView(withId(R.id.convert)).perform(click());onView(withId(android.R.id.button1)).perform(click());
     onView(withHint("Số tiền (VNĐ)")).perform(replaceText("60000"),androidx.test.espresso.action.ViewActions.closeSoftKeyboard());
     onView(withId(android.R.id.button1)).perform(click());
-    scenario.onActivity(a->{assertEquals(360000,model[0].data.getValue().total);assertNotNull(model[0].data.getValue().groceries.get(0).getAsLong("expense_id"));});
+    scenario.onActivity(a->{assertEquals(360000,model[0].getState().getValue().total);assertNotNull(grocery[0].getState().getValue().items.get(0).expenseId);});
     onView(withContentDescription("Đã mua Gạo")).check(matches(not(isEnabled())));capture("splitmate-grocery-linked.png");
    }finally{
-    scenario.onActivity(a->{if(created[0]!=0)model[0].write(db->db.deleteGroup(created[0]),null);});
-    onIdle();scenario.onActivity(a->model[0].busy.removeObserver(observer));IdlingRegistry.getInstance().unregister(idle);
+    scenario.onActivity(a->{if(created[0]!=0)model[0].deleteGroup(created[0]);});
+    onIdle();scenario.onActivity(a->BaseViewModel.busy().removeObserver(observer));IdlingRegistry.getInstance().unregister(idle);
    }
   }
  }

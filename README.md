@@ -30,14 +30,27 @@ Nút **⋮** ở góc trên có:
 
 Bản sao lưu là JSON không mã hóa; người có tệp có thể đọc dữ liệu. Giới hạn nhập tệp 10 MB và tổng 100.000 dòng.
 
-## Cấu trúc
-- `MainActivity`: điều hướng Trang chủ, Nhóm, Đi chợ.
-- `WorkspaceFragment`: các màn hình và biểu mẫu.
-- `WorkspaceAdapter`: RecyclerView/ListAdapter, DiffUtil cập nhật từng dòng.
-- `WorkspaceModel`: ViewModel/LiveData; mọi thao tác SQLite và tệp chạy trên executor nền.
-- `DatabaseHelper`: 6 bảng, transaction cho hóa đơn/phần chia/chuyển món đi chợ; migration DB 1/2 → 3 giữ dữ liệu và thêm đơn vị, liên kết hóa đơn.
-- `BackupStore`: kiểm tra cấu trúc, khóa liên kết, tổng phần chia trước khi khôi phục trong transaction.
-- `DebtPlanner`: tính gợi ý thanh toán từ số dư.
+## Cấu trúc (MVVM)
+Luồng dữ liệu: **Fragment** (giao diện) → **ViewModel** (luồng nền, LiveData) → **Repository** → **DatabaseHelper** (SQLite).
+
+```
+com.example.quanlychitieu/
+├── MainActivity                 Điều hướng Trang chủ / Nhóm / Đi chợ
+├── data/
+│   ├── local/                   DatabaseHelper (6 bảng, transaction, migration 1/2 → 3), BackupStore (JSON)
+│   ├── model/                   Group, Member, Expense, GroceryItem, Payment, CategoryTotal
+│   └── repository/              GroupRepository, ExpenseRepository, GroceryRepository
+├── domain/                      SplitCalculator (chia đều từng đồng), DebtPlanner (gợi ý ai trả ai)
+└── ui/
+    ├── common/                  BaseScreenFragment, BaseViewModel, RowAdapter, RowList, Format, Forms
+    ├── home/                    HomeFragment
+    ├── group/                   GroupFragment, GroupViewModel, ExpenseDialog
+    └── grocery/                 GroceryFragment, GroceryViewModel
+```
+- Chỉ Repository làm việc với SQL; ViewModel và Fragment dùng các lớp trong `data/model`.
+- `BaseViewModel` chạy mọi thao tác database trên một luồng nền dùng chung; sau mỗi lần ghi, mọi ViewModel tự tải lại.
+- `GroupViewModel` gắn với Activity nên 3 màn hình luôn xem cùng một nhóm.
+- Giao diện: `res/layout/fragment_workspace.xml` (khung màn hình), `item_workspace.xml` (một dòng), `dialog_*.xml` (hộp thoại nhập liệu).
 
 ## Chạy và kiểm thử
 Mở Android Studio, Sync Gradle và Run biến thể **debug** để dùng ứng dụng.
